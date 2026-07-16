@@ -1,0 +1,6 @@
+# Editor/tool-local settings
+.claude/
+
+# OS junk files
+.DS_Store
+Thumbs.db

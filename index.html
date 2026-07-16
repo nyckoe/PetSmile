@@ -1,0 +1,1231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PetSmile — Interactive Demo</title>
+<style>
+  :root{
+    --shelter: #2f7d6b;
+    --shelter-dark: #1f5b4d;
+    --shelter-bg: #eaf5f1;
+    --adopter: #e0703f;
+    --adopter-dark: #b8532a;
+    --adopter-bg: #fdf0e7;
+    --ink: #202426;
+    --sub: #6b7378;
+    --card-bg: #ffffff;
+    --line: #e3e6e7;
+    --header-h: 64px;
+  }
+  *{ box-sizing: border-box; }
+  html,body{
+    margin:0; padding:0; height:100%; width:100%;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: var(--ink);
+    overflow: hidden;
+    background: #14181a;
+  }
+  body{ display:flex; flex-direction:column; height:100vh; }
+
+  /* ---------- Top bar ---------- */
+  .topbar{
+    flex: 0 0 var(--header-h); height: var(--header-h);
+    display:grid; grid-template-columns: 1fr auto 1fr; align-items:center;
+    padding: 0 24px; background:#fff; border-bottom:1px solid var(--line);
+    z-index:10; position:relative;
+  }
+  .topbar .logo{
+    grid-column:2; justify-self:center; display:flex; align-items:center; gap:6px;
+    font-size:19px; font-weight:800; letter-spacing:-.01em; color:var(--ink);
+  }
+  .topbar .logo .paw{ font-size:20px; }
+  .topnav{ grid-column:3; justify-self:end; display:flex; align-items:center; gap:22px; }
+  .topnav a{
+    font-size:13px; font-weight:600; color:var(--sub); text-decoration:none;
+    transition: color .15s ease;
+  }
+  .topnav a:hover{ color: var(--ink); }
+  .topnav a.cta{
+    color:#fff; background: var(--ink); padding:8px 14px; border-radius:8px;
+  }
+  .topnav a.cta:hover{ background:#3a4145; color:#fff; }
+
+  /* ---------- Scroll container: hero section, then the panels ---------- */
+  .scroll-container{
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    scroll-snap-type: y mandatory;
+    scroll-behavior: smooth;
+  }
+  .hero-section, .stage-section{
+    height: 100%;
+    scroll-snap-align: start;
+    scroll-snap-stop: always;
+  }
+
+  /* ---------- Hero section ---------- */
+  .hero-section{
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    text-align:center; padding:40px 24px; position:relative; overflow-y:auto;
+    background: linear-gradient(120deg, #eaf5f1 0%, #fdfaf3 50%, #fdf0e7 100%);
+  }
+  .hero-content{ max-width:640px; display:flex; flex-direction:column; align-items:center; gap:15px; margin:auto; }
+  .hero-eyebrow{
+    font-size:12px; font-weight:800; letter-spacing:.18em; text-transform:uppercase; color:var(--sub);
+    opacity:0; transform:translateY(14px); animation: heroIn .6s ease forwards;
+  }
+  .hero-line{
+    font-size:17px; line-height:1.6; color:var(--ink); margin:0; font-weight:500;
+    opacity:0; transform:translateY(18px); animation: heroIn .7s cubic-bezier(.22,.8,.3,1) forwards;
+  }
+  .hero-line.headline{ font-size:23px; font-weight:800; line-height:1.4; }
+  .hl-shelter{ color:var(--shelter-dark); }
+  .hl-adopter{ color:var(--adopter-dark); }
+  @keyframes heroIn{ to{ opacity:1; transform:translateY(0); } }
+
+  .hero-paws{ font-size:22px; letter-spacing:12px; margin-top:4px; opacity:0; transform:translateY(18px); animation: heroIn .7s ease forwards; }
+  .hero-paws span{ display:inline-block; animation: pawFloat 2.4s ease-in-out infinite; }
+  .hero-paws span:nth-child(2){ animation-delay:.2s; }
+  .hero-paws span:nth-child(3){ animation-delay:.4s; }
+  @keyframes pawFloat{ 0%,100%{ transform:translateY(0); } 50%{ transform:translateY(-6px); } }
+
+  .scroll-cue{
+    position:absolute; bottom:26px; left:50%; transform:translateX(-50%);
+    display:flex; flex-direction:column; align-items:center; gap:2px;
+    font-size:11px; font-weight:700; letter-spacing:.05em; color:var(--sub);
+    text-decoration:none; opacity:0; animation: heroIn .6s ease forwards; cursor:pointer; background:none; border:none;
+  }
+  .scroll-cue .chevron{ font-size:20px; animation: chevronBounce 1.6s ease-in-out infinite; }
+  @keyframes chevronBounce{ 0%,100%{ transform:translateY(0); } 50%{ transform:translateY(6px); } }
+
+  /* ---------- Stage section / hover-split layout ---------- */
+  .stage-section{ display:flex; }
+  .stage{
+    display:flex;
+    flex: 1 1 auto;
+    min-height: 0;
+    width:100%;
+  }
+  .panel{
+    position:relative;
+    flex: 1 1 0;
+    min-width: 0;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    overflow:hidden;
+    transition: flex-basis .55s cubic-bezier(.22,.9,.32,1), flex-grow .55s cubic-bezier(.22,.9,.32,1);
+    cursor: pointer;
+  }
+  .left-panel{ background: radial-gradient(120% 140% at 20% 0%, #dff2ec 0%, var(--shelter-bg) 55%, #dcece6 100%); }
+  .right-panel{ background: radial-gradient(120% 140% at 80% 0%, #fbe3d3 0%, var(--adopter-bg) 55%, #f8ddc9 100%); }
+
+  .stage.left-hover .left-panel{ flex-grow: 9; }
+  .stage.left-hover .right-panel{ flex-grow: 1; }
+  .stage.right-hover .right-panel{ flex-grow: 9; }
+  .stage.right-hover .left-panel{ flex-grow: 1; }
+
+  .divider{ width:2px; background:rgba(0,0,0,.06); z-index:2; }
+
+  .panel-label{
+    position:absolute; top:28px; left:50%; transform:translateX(-50%); z-index:1;
+    font-size:13px; font-weight:700; letter-spacing:.16em; text-transform:uppercase;
+    opacity:.8; white-space:nowrap; transition: opacity .35s ease, transform .45s ease;
+  }
+  .left-panel .panel-label{ color: var(--shelter-dark); }
+  .right-panel .panel-label{ color: var(--adopter-dark); }
+
+  /* Big watermark text behind the phone mockup, rotated in toward the middle divider */
+  .panel-watermark-wrap{
+    position:absolute; top:50%; z-index:0; pointer-events:none; overflow:visible;
+  }
+  .left-panel .panel-watermark-wrap{ right:10px; transform: translateY(-50%); }
+  .right-panel .panel-watermark-wrap{ left:10px; transform: translateY(-50%); }
+  .panel-watermark-text{
+    display:inline-block; white-space:nowrap; line-height:1;
+    font-weight:800; letter-spacing:-.01em; text-transform:uppercase;
+    color: var(--sub); opacity:.5; transform-origin:center center;
+  }
+
+  .panel-inner{
+    position:relative; z-index:1;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:16px;
+    transition: transform .55s cubic-bezier(.22,.9,.32,1), opacity .4s ease;
+    transform: scale(1);
+  }
+
+  /* Collapsed (minimized) state: shrink + fade the phone content; keep the "Shelter" / "Adopter" label visible */
+  .panel.collapsed .panel-inner{ transform: scale(.32); opacity: 0; pointer-events:none; }
+
+  /* ---------- Phone mockup ---------- */
+  .phone-row{ display:flex; align-items:center; gap:10px; min-height:0; }
+  .nav-arrow{
+    width:38px; height:38px; border-radius:50%; border:none;
+    background: rgba(255,255,255,.85); box-shadow: 0 2px 10px rgba(0,0,0,.12);
+    font-size:20px; line-height:1; cursor:pointer; color:var(--ink);
+    display:flex; align-items:center; justify-content:center;
+    transition: transform .15s ease, background .15s ease;
+    flex-shrink:0;
+  }
+  .nav-arrow:hover{ transform: scale(1.08); }
+  .nav-arrow:active{ transform: scale(.94); }
+
+  .phone{
+    background:#141618;
+    border-radius:34px;
+    padding:10px;
+    box-shadow: 0 24px 48px rgba(0,0,0,.28), 0 2px 6px rgba(0,0,0,.15);
+    position:relative;
+    flex-shrink:0;
+    transition: width .25s ease, height .25s ease;
+  }
+  .phone::before{
+    content:''; position:absolute; top:22px; left:50%; transform:translateX(-50%);
+    width:70px; height:16px; background:#141618; border-radius:10px; z-index:5;
+  }
+  .screen{
+    width:100%; height:100%; background:var(--card-bg); border-radius:24px;
+    overflow:hidden; position:relative;
+  }
+  .tab-content{
+    position:absolute; inset:0; padding:34px 14px 14px;
+    opacity:0; visibility:hidden; transform: translateX(14px);
+    transition: opacity .3s ease, transform .35s ease;
+    overflow-y:auto;
+  }
+  .tab-content.active{ opacity:1; visibility:visible; transform:none; }
+  .tab-content::-webkit-scrollbar{ width:4px; }
+  .tab-content::-webkit-scrollbar-thumb{ background:#ddd; border-radius:2px; }
+
+  .tab-title{ font-size:12.5px; font-weight:800; text-transform:uppercase; letter-spacing:.07em; color:var(--sub); margin:0 0 10px; }
+
+  .dots{ display:flex; gap:7px; margin-top:2px; }
+  .dot{ width:7px; height:7px; border-radius:50%; background:rgba(0,0,0,.18); cursor:pointer; transition: all .25s ease; }
+  .dot.active{ width:20px; border-radius:4px; }
+  .left-panel .dot.active{ background: var(--shelter); }
+  .right-panel .dot.active{ background: var(--adopter); }
+
+  /* ---------- Shared small UI bits ---------- */
+  .field-label{ font-size:11px; font-weight:700; color:var(--sub); margin:12px 0 5px; text-transform:uppercase; letter-spacing:.04em; }
+  .field-label:first-child{ margin-top:0; }
+
+  .upload-box{
+    border:2px dashed #c9d6d1; border-radius:12px; padding:14px 10px;
+    text-align:center; color:var(--sub); font-size:11.5px; background:#fbfdfc;
+    min-height:150px;
+  }
+  .upload-box .icon{ font-size:22px; display:block; margin-bottom:4px; }
+  .thumbs{ display:flex; gap:6px; margin-top:8px; justify-content:center; }
+  .thumb{ width:34px; height:34px; border-radius:8px; background:linear-gradient(135deg,#d7ecd3,#b9dcc4); display:flex; align-items:center; justify-content:center; font-size:16px; }
+
+  /* Photo-upload animation: a cartoon cat photo drops into the upload area, then confirms success */
+  .upload-stage{ position:relative; min-height:86px; margin-top:8px; }
+  .upload-photo-card{
+    width:64px; height:64px; margin:0 auto; border-radius:12px; overflow:hidden;
+    box-shadow:0 6px 14px rgba(0,0,0,.14);
+    opacity:0; transform: translateY(16px) scale(.85);
+    transition: opacity .4s ease, transform .4s cubic-bezier(.2,.9,.3,1.2);
+  }
+  .upload-stage.uploading .upload-photo-card{ opacity:1; transform:translateY(0) scale(1); }
+  .upload-photo-card svg{ width:100%; height:100%; display:block; }
+  .upload-progress-track{ width:64px; height:5px; margin:8px auto 0; background:#e3e6e7; border-radius:3px; overflow:hidden; }
+  .upload-progress-fill{ height:100%; width:0%; background:var(--shelter); border-radius:3px; transition:width 1.1s linear; }
+  .upload-stage.uploading .upload-progress-fill{ width:100%; }
+  .upload-success-msg{
+    position:absolute; inset:0; display:flex; align-items:center; justify-content:center; gap:6px;
+    font-size:12.5px; font-weight:800; color:var(--shelter-dark);
+    opacity:0; transform:scale(.8); transition: opacity .3s ease, transform .3s cubic-bezier(.34,1.56,.64,1);
+    pointer-events:none;
+  }
+  .upload-success-msg .check-badge{
+    width:18px; height:18px; border-radius:50%; background:var(--shelter); color:#fff;
+    display:flex; align-items:center; justify-content:center; font-size:11px; flex-shrink:0;
+  }
+  .upload-stage.success .upload-photo-card{ opacity:0; transform:translateY(-6px) scale(.9); }
+  .upload-stage.success .upload-success-msg{ opacity:1; transform:scale(1); }
+
+  .chip-row{ display:flex; flex-wrap:wrap; gap:6px; }
+  .chip{
+    font-size:11px; padding:6px 10px; border-radius:999px; background:#f1f4f2;
+    border:1px solid var(--line); color:var(--ink); cursor:pointer; user-select:none;
+    transition: all .15s ease;
+  }
+  .chip.on{ background: var(--shelter); color:#fff; border-color:var(--shelter); }
+  .right-panel .chip.on{ background: var(--adopter); border-color:var(--adopter); }
+
+  textarea.req-box{
+    width:100%; min-height:56px; border-radius:10px; border:1px solid var(--line);
+    padding:8px; font-size:11.5px; font-family:inherit; resize:none; color:var(--ink);
+    background:#fbfdfc;
+  }
+  textarea.req-box:focus{ outline:2px solid var(--shelter); }
+  .right-panel textarea.req-box:focus{ outline-color: var(--adopter); }
+
+  /* ---------- Adopter "Find a Pet" tab: illustration + attribute dropdowns (~50% of screen) + wish ---------- */
+  .find-fullscreen{ height:100%; display:flex; flex-direction:column; gap:10px; }
+  .attr-section{ flex:1 1 0; min-height:0; display:flex; flex-direction:column; gap:6px; overflow-y:auto; }
+  .girl-illustration{ flex:0 0 auto; display:flex; justify-content:center; }
+  .girl-illustration svg{ width:100px; height:auto; }
+  .select-grid{ display:grid; grid-template-columns:1fr 1fr; gap:7px; }
+  .attr-select{
+    width:100%; font-size:11px; font-family:inherit; padding:7px 8px; border-radius:8px;
+    border:1px solid var(--line); background:#fff; color:var(--ink); cursor:pointer;
+  }
+  .attr-select:focus{ outline:2px solid var(--adopter); }
+  .wish-section{ flex:1 1 0; min-height:0; display:flex; flex-direction:column; }
+  .wish-section textarea.req-box{ flex:1; }
+
+  /* ---------- AI animation demo ---------- */
+  .ai-box{ background:#f7f9f8; border:1px solid var(--line); border-radius:12px; padding:12px; margin-top:4px; }
+  .ai-box .src-label{ font-size:10px; font-weight:700; color:var(--sub); text-transform:uppercase; letter-spacing:.05em; margin-bottom:4px;}
+  .typewriter{
+    font-size:12.5px; line-height:1.5; color:var(--ink); min-height:38px;
+    font-style:italic;
+  }
+  .typewriter::after{ content:'▎'; opacity:.5; animation: blink 1s step-start infinite; }
+  @keyframes blink{ 50%{ opacity:0; } }
+  .ai-arrow{ text-align:center; margin:10px 0; font-size:10.5px; font-weight:700; color:#b9c0bd; letter-spacing:.03em; transition:color .3s ease; }
+  .ai-arrow.active{ color: var(--shelter); }
+  .right-panel .ai-arrow.active{ color: var(--adopter); }
+  .rule-pills{ display:flex; flex-wrap:wrap; gap:6px; opacity:0; transition:opacity .2s ease; }
+  .rule-pills.show{ opacity:1; }
+  .pill{
+    font-size:10.5px; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    background:#eef6f2; border:1px solid #bfe0d1; color:var(--shelter-dark);
+    padding:4px 8px; border-radius:7px; opacity:0; transform:scale(.7);
+    transition: all .28s cubic-bezier(.34,1.56,.64,1);
+  }
+  .pill.hard{ background:#fdeeee; border-color:#f0c6c6; color:#a13e3e; }
+  .right-panel .pill{ background:#fdf0e7; border-color:#f0cdb0; color:var(--adopter-dark); }
+  .pill.pop{ opacity:1; transform:scale(1); }
+
+  /* ---------- Full-screen AI tab (shelter tab 2) ---------- */
+  .ai-fullscreen{ height:100%; display:flex; flex-direction:column; gap:10px; }
+  .ai-fullscreen .ai-box{
+    flex:1 1 0; min-height:0; display:flex; flex-direction:column; justify-content:center;
+    padding:18px; overflow-y:auto;
+  }
+  .ai-fullscreen .src-label{ font-size:12px; margin-bottom:8px; }
+  .ai-fullscreen .typewriter{ font-size:17px; line-height:1.65; min-height:auto; }
+  .ai-fullscreen .draft-text{ font-size:16px; line-height:1.65; font-style:italic; color:#4b5257; }
+  .ai-fullscreen .ai-arrow{ flex-shrink:0; font-size:12px; margin:2px 0; }
+  .ai-fullscreen .rule-pills{ flex-shrink:0; }
+  .ai-fullscreen .pill{ font-size:12.5px; padding:6px 11px; }
+
+  /* ---------- Match / swipe stack ---------- */
+  .match-stack-wrap{ margin-top:12px; opacity:0; max-height:0; overflow:hidden; transition: opacity .4s ease; }
+  .match-stack-wrap.show{ opacity:1; max-height:260px; }
+  .match-stack{ position:relative; height:190px; margin:0 auto; width:100%; }
+  .pet-card{
+    position:absolute; inset:0; background:#fff; border:1px solid var(--line); border-radius:14px;
+    box-shadow:0 6px 16px rgba(0,0,0,.08); padding:10px; touch-action:none; cursor:grab;
+    display:flex; flex-direction:column;
+  }
+  .pet-photo{ height:70px; border-radius:10px; background:linear-gradient(135deg,#ffe3cf,#ffcf9e); display:flex; align-items:center; justify-content:center; font-size:34px; }
+  .pet-info{ margin-top:6px; }
+  .pet-name{ font-size:13px; font-weight:800; }
+  .pet-sub{ font-size:10px; color:var(--sub); margin:1px 0 4px; }
+  .pet-blurb{ font-size:10.5px; color:#4b5257; line-height:1.35; }
+  .swipe-badge{
+    position:absolute; top:10px; font-size:11px; font-weight:800; letter-spacing:.06em;
+    padding:4px 8px; border-radius:6px; border:2px solid; opacity:0; transition:opacity .1s ease;
+  }
+  .swipe-badge.like{ left:10px; color:#2f9e5a; border-color:#2f9e5a; transform:rotate(-12deg); }
+  .swipe-badge.nope{ right:10px; color:#d1483f; border-color:#d1483f; transform:rotate(12deg); }
+
+  .swipe-controls{ display:flex; justify-content:center; gap:22px; margin-top:10px; }
+  .swipe-btn{
+    width:38px; height:38px; border-radius:50%; border:1px solid var(--line); background:#fff;
+    font-size:16px; cursor:pointer; box-shadow:0 2px 6px rgba(0,0,0,.08);
+  }
+  .swipe-btn.pass{ color:#d1483f; }
+  .swipe-btn.like{ color:#2f9e5a; }
+
+  .match-toast{
+    position:absolute; left:50%; top:40%; transform:translate(-50%,-50%) scale(.8); z-index:20;
+    opacity:0; pointer-events:none; transition:opacity .25s ease, transform .25s ease;
+    background:rgba(20,24,22,.92); color:#fff; padding:10px 16px; border-radius:12px; font-weight:800; font-size:13px;
+    white-space:nowrap;
+  }
+  .match-toast.show{ opacity:1; transform:translate(-50%,-50%) scale(1); }
+
+  /* ---------- Swipe tutorial hint animation ---------- */
+  @keyframes swipeHintCard{
+    0%,100%{ transform:translateX(0) rotate(0deg); }
+    22%{ transform:translateX(46px) rotate(10deg); }
+    50%{ transform:translateX(0) rotate(0deg); }
+    72%{ transform:translateX(-46px) rotate(-10deg); }
+  }
+  @keyframes swipeHintLike{ 0%,45%,100%{ opacity:0; } 22%{ opacity:1; } }
+  @keyframes swipeHintNope{ 0%,55%,100%{ opacity:0; } 72%{ opacity:1; } }
+  @keyframes swipeHintHand{
+    0%,100%{ opacity:0; transform:translate(-50%,-50%) rotate(0deg); }
+    10%{ opacity:1; }
+    22%{ opacity:1; transform:translate(calc(-50% + 46px),-50%) rotate(12deg); }
+    45%{ opacity:0; }
+    55%{ opacity:0; }
+    62%{ opacity:1; }
+    72%{ opacity:1; transform:translate(calc(-50% - 46px),-50%) rotate(-12deg); }
+    90%{ opacity:0; }
+  }
+  .pet-card.hinting{ animation: swipeHintCard 3.2s ease-in-out 1; }
+  .pet-card.hinting .swipe-badge.like{ animation: swipeHintLike 3.2s ease-in-out 1; }
+  .pet-card.hinting .swipe-badge.nope{ animation: swipeHintNope 3.2s ease-in-out 1; }
+  .hint-hand{
+    position:absolute; font-size:26px; top:45%; left:50%; transform:translate(-50%,-50%);
+    opacity:0; pointer-events:none; z-index:30;
+    animation: swipeHintHand 3.2s ease-in-out 1;
+  }
+  .swipe-hint-text{
+    text-align:center; font-size:11px; color:var(--sub); margin-top:8px; opacity:0;
+    transition:opacity .4s ease;
+  }
+  .swipe-hint-text.show{ opacity:1; }
+
+  /* ---------- Availability / calendar ---------- */
+  .toggle-row{ display:flex; gap:6px; margin-bottom:10px; }
+  .toggle-btn{
+    flex:1; font-size:10.5px; font-weight:700; padding:7px 4px; border-radius:8px; border:1px solid var(--line);
+    background:#f5f7f6; color:var(--sub); cursor:pointer;
+  }
+  .toggle-btn.active{ background:var(--shelter); color:#fff; border-color:var(--shelter); }
+  .right-panel .toggle-btn.active{ background:var(--adopter); border-color:var(--adopter); }
+
+  .avail-fullscreen{ height:100%; display:flex; flex-direction:column; gap:10px; }
+  .avail-grid{ display:flex; gap:8px; flex:1 1 0; min-height:0; }
+  .avail-day-col{ flex:1; display:flex; flex-direction:column; gap:6px; min-height:0; }
+  .avail-day-label{ font-size:12px; text-align:center; color:var(--sub); font-weight:700; flex:0 0 auto; }
+  .slot-cell{
+    flex:1 1 0; display:flex; align-items:center; justify-content:center;
+    font-size:13px; font-weight:600; text-align:center; border-radius:9px;
+    background:#f2f4f3; color:#9aa3a0; cursor:pointer; border:1px solid transparent;
+    transition: all .15s ease;
+  }
+  .slot-cell.published{ background:#e4f4ec; color:var(--shelter-dark); border-color:#bfe0d1; font-weight:800; }
+  .avail-hint{ font-size:10.5px; color:var(--sub); line-height:1.4; flex-shrink:0; }
+
+  .matched-row{ display:flex; gap:10px; overflow-x:auto; padding:2px 2px 8px; }
+  .matched-chip{
+    flex:0 0 auto; display:flex; flex-direction:column; align-items:center; gap:4px;
+    cursor:pointer; opacity:.55; transition: opacity .15s ease;
+  }
+  .matched-chip.active{ opacity:1; }
+  .matched-chip .avatar{
+    width:46px; height:46px; border-radius:13px; background:linear-gradient(135deg,#ffe3cf,#ffcf9e);
+    display:flex; align-items:center; justify-content:center; font-size:22px;
+    border:2px solid transparent;
+  }
+  .matched-chip.active .avatar{ border-color: var(--adopter); }
+  .matched-chip .name{ font-size:10px; font-weight:700; color:var(--sub); }
+  .matched-chip.active .name{ color:var(--adopter-dark); }
+
+  .booking-pet{ display:flex; align-items:center; gap:8px; background:#f7f9f8; border-radius:10px; padding:8px; margin-bottom:12px; }
+  .pet-photo-sm{ width:34px; height:34px; border-radius:8px; background:linear-gradient(135deg,#ffe3cf,#ffcf9e); display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0; }
+  .section-title{ font-size:11px; font-weight:700; color:var(--sub); margin-bottom:6px; text-transform:uppercase; letter-spacing:.03em; }
+  .slot-list{ display:flex; flex-direction:column; gap:9px; margin-bottom:14px; }
+  .slot-btn{
+    text-align:left; font-size:14.5px; font-weight:600; padding:14px 16px; border-radius:11px; border:1.5px solid var(--line);
+    background:#fff; cursor:pointer; color:var(--ink);
+  }
+  .slot-btn.selected{ border-color: var(--adopter); background:#fdf0e7; font-weight:700; }
+  .left-panel .slot-btn.selected{ border-color: var(--shelter); background:#eaf5f1; }
+  .primary-btn{
+    width:100%; padding:10px; border:none; border-radius:10px; font-size:12px; font-weight:800;
+    background:#d8dbd9; color:#fff; cursor:not-allowed; transition: all .2s ease;
+  }
+  .primary-btn.ready{ background: var(--adopter); cursor:pointer; }
+  .left-panel .primary-btn.ready{ background: var(--shelter); }
+  .secondary-btn{
+    width:100%; padding:9px; border-radius:10px; font-size:11.5px; font-weight:700; cursor:pointer;
+    background:#fff; border:1.5px solid var(--adopter); color:var(--adopter-dark);
+  }
+  .confirm-box{
+    background:#eaf6ee; border:1px solid #bfe0cc; color:#2b7a45; font-size:11.5px; font-weight:600;
+    padding:9px 10px; border-radius:10px; margin-bottom:12px;
+  }
+  .booking-step{ transition: opacity .3s ease; }
+  .booking-step.hidden{ display:none; }
+
+  @media (max-width: 900px){
+    .panel-label{ top:16px; font-size:11px; }
+  }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div></div>
+  <div class="logo"><span class="paw">🐾</span>PetSmile</div>
+  <nav class="topnav">
+    <a href="#">Login</a>
+    <a href="#">Sign Up</a>
+    <a href="#">Help</a>
+    <a href="#">Contact Us</a>
+  </nav>
+</header>
+
+<div class="scroll-container">
+
+  <section class="hero-section" id="heroSection">
+    <div class="hero-content">
+      <div class="hero-eyebrow" style="animation-delay:.05s;">Why PetSmile</div>
+      <p class="hero-line headline" style="animation-delay:.15s;">Every year, wonderful pets and loving families miss each other simply because they never meet.</p>
+      <p class="hero-line" style="animation-delay:.3s;">PetSmile brings <span class="hl-shelter">shelters</span> and <span class="hl-adopter">adopters</span> together in one place, powered by AI that removes the busywork on both sides.</p>
+      <p class="hero-line" style="animation-delay:.45s;">Shelters go from a few photos and notes to a complete, ready-to-publish pet profile in minutes, not hours.</p>
+      <p class="hero-line" style="animation-delay:.6s;">Adopters swipe through pets who are <span class="hl-adopter">already a real match</span> for their home, so no one wastes time on a good-bye that was never going to work.</p>
+      <p class="hero-line" style="animation-delay:.75s;">Every match opens a live video chat — and when that goes well, an in-person visit, turning a swipe into a new best friend.</p>
+      <div class="hero-paws" style="animation-delay:.9s;"><span>🐾</span><span>🐱</span><span>🐶</span></div>
+    </div>
+    <button class="scroll-cue" id="scrollCue" style="animation-delay:1.1s;" aria-label="Scroll to explore the demo">
+      <span>Scroll to explore</span>
+      <span class="chevron">⌄</span>
+    </button>
+  </section>
+
+  <section class="stage-section" id="stageSection">
+  <div class="stage" id="stage">
+
+  <!-- ============ LEFT: SHELTER PANEL ============ -->
+  <div class="panel left-panel" id="leftPanel">
+    <div class="panel-watermark-wrap"><span class="panel-watermark-text" id="leftWatermarkText">Shelters</span></div>
+    <div class="panel-label">Shelter</div>
+    <div class="panel-inner">
+      <div class="phone-row">
+        <button class="nav-arrow prev" data-panel="left">&#8249;</button>
+        <div class="phone" id="leftPhone">
+          <div class="screen">
+
+            <div class="tab-content active" data-tab="0">
+              <div class="tab-title">New Listing</div>
+              <div class="field-label">Photos</div>
+              <div class="upload-box">
+                <span class="icon">📷</span>
+                Drag photos here or tap to upload
+                <div class="upload-stage" id="uploadStage">
+                  <div class="upload-photo-card">
+                    <svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                      <rect x="2" y="2" width="76" height="76" rx="10" fill="#fff" stroke="#e3e6e7" stroke-width="2"/>
+                      <rect x="8" y="8" width="64" height="64" rx="6" fill="#ffe9d6"/>
+                      <path d="M24,30 L18,14 L34,26 Z" fill="#e8a15c"/>
+                      <path d="M56,30 L62,14 L46,26 Z" fill="#e8a15c"/>
+                      <ellipse cx="40" cy="46" rx="20" ry="17" fill="#f2b877"/>
+                      <circle cx="32" cy="42" r="2.4" fill="#33322f"/>
+                      <circle cx="48" cy="42" r="2.4" fill="#33322f"/>
+                      <path d="M38,50 Q40,53 42,50" stroke="#33322f" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+                      <path d="M16,44 L28,46 M16,50 L28,48 M64,44 L52,46 M64,50 L52,48" stroke="#c98a52" stroke-width="1.2"/>
+                    </svg>
+                  </div>
+                  <div class="upload-progress-track"><div class="upload-progress-fill" id="uploadFill"></div></div>
+                  <div class="upload-success-msg"><span class="check-badge">✓</span> Uploaded successfully!</div>
+                </div>
+                <div class="thumbs" id="uploadThumbs">
+                  <div class="thumb">🐈</div><div class="thumb">🐾</div>
+                </div>
+              </div>
+              <div class="field-label">Breed / Age / Attributes</div>
+              <div class="chip-row">
+                <span class="chip on">Domestic Shorthair</span>
+                <span class="chip on">4 yrs</span>
+                <span class="chip">Small</span>
+                <span class="chip on">Low energy</span>
+                <span class="chip">Playful</span>
+              </div>
+              <div class="field-label">Adoption Requirements (plain language)</div>
+              <textarea class="req-box" readonly>She doesn't do well with young kids or other cats.</textarea>
+            </div>
+
+            <div class="tab-content" data-tab="1">
+              <div class="tab-title">AI-Generated Profile</div>
+              <div class="ai-fullscreen">
+                <div class="ai-box">
+                  <div class="src-label">Staff note</div>
+                  <div class="typewriter" id="shelterNoteText"></div>
+                </div>
+                <div class="ai-arrow" id="shelterArrow">↓ extracting structured rules ↓</div>
+                <div class="rule-pills" id="shelterRulePills">
+                  <span class="pill">no_children_under: 6</span>
+                  <span class="pill">other_cats: false</span>
+                  <span class="pill hard">hard_rule: true</span>
+                </div>
+                <div class="ai-box">
+                  <div class="src-label">Draft description</div>
+                  <div class="draft-text">"Meet Milo — a laid-back, independent guy who'd love a quiet home all to himself. He's happiest as the only pet, with grown-up humans to dote on him."</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="tab-content" data-tab="2">
+              <div class="tab-title">Availability</div>
+              <div class="avail-fullscreen">
+                <div class="toggle-row">
+                  <button class="toggle-btn active" data-avail="video">📹 Video Chat</button>
+                  <button class="toggle-btn" data-avail="visit">🏠 In-Person</button>
+                </div>
+                <div class="avail-grid" id="shelterAvailGrid"></div>
+                <div class="avail-hint">Tap a slot to publish or unpublish it for matched adopters.</div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+        <button class="nav-arrow next" data-panel="left">&#8250;</button>
+      </div>
+      <div class="dots" id="leftDots">
+        <span class="dot active" data-panel="left" data-idx="0"></span>
+        <span class="dot" data-panel="left" data-idx="1"></span>
+        <span class="dot" data-panel="left" data-idx="2"></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- ============ RIGHT: ADOPTER PANEL ============ -->
+  <div class="panel right-panel" id="rightPanel">
+    <div class="panel-watermark-wrap"><span class="panel-watermark-text" id="rightWatermarkText">Adopter</span></div>
+    <div class="panel-label">Adopter</div>
+    <div class="panel-inner">
+      <div class="phone-row">
+        <button class="nav-arrow prev" data-panel="right">&#8249;</button>
+        <div class="phone" id="rightPhone">
+          <div class="screen">
+
+            <div class="tab-content active" data-tab="0">
+              <div class="tab-title">Find a Pet</div>
+              <div class="find-fullscreen">
+                <div class="attr-section">
+                  <div class="girl-illustration">
+                    <svg viewBox="0 0 200 150" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                      <ellipse cx="100" cy="142" rx="72" ry="7" fill="#000" opacity="0.07"/>
+                      <g>
+                        <ellipse cx="158" cy="122" rx="23" ry="19" fill="#caa06b" stroke="#a97e4c" stroke-width="1.5"/>
+                        <path d="M175,106 Q191,110 186,132 Q175,132 172,114 Z" fill="#a97e4c"/>
+                        <path d="M144,104 L150,90 L158,106 Z" fill="#caa06b" stroke="#a97e4c" stroke-width="1.5"/>
+                        <circle cx="151" cy="120" r="2" fill="#4a3a26"/>
+                        <circle cx="165" cy="120" r="2" fill="#4a3a26"/>
+                        <ellipse cx="158" cy="128" rx="3.5" ry="2.5" fill="#4a3a26"/>
+                        <path d="M155,132 Q158,140 154,142 Q150,140 153,132 Z" fill="#f2a3a3"/>
+                      </g>
+                      <g>
+                        <ellipse cx="42" cy="122" rx="21" ry="18" fill="#c9ced0" stroke="#a9b0b2" stroke-width="1.5"/>
+                        <path d="M25,108 L31,92 L39,106 Z" fill="#c9ced0" stroke="#a9b0b2" stroke-width="1.5"/>
+                        <path d="M43,106 L51,90 L57,106 Z" fill="#c9ced0" stroke="#a9b0b2" stroke-width="1.5"/>
+                        <path d="M32,120 Q36,124 40,120" stroke="#4a4f50" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+                        <path d="M44,120 Q48,124 52,120" stroke="#4a4f50" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+                        <path d="M40,126 L44,126 L42,129 Z" fill="#e08a8a"/>
+                        <path d="M14,120 L28,122 M14,126 L28,125 M56,120 L70,118 M56,126 L70,128" stroke="#a9b0b2" stroke-width="1"/>
+                      </g>
+                      <path d="M83,86 Q56,98 47,120" stroke="#f3a86b" stroke-width="15" fill="none" stroke-linecap="round"/>
+                      <path d="M117,86 Q145,98 154,120" stroke="#f3a86b" stroke-width="15" fill="none" stroke-linecap="round"/>
+                      <path d="M76,80 L124,80 L136,144 L64,144 Z" fill="#f3a86b" stroke="#c97a3f" stroke-width="1.5"/>
+                      <circle cx="100" cy="54" r="23" fill="#ffd7ae"/>
+                      <path d="M77,50 Q100,24 123,50 Q118,38 100,36 Q82,38 77,50 Z" fill="#6b4a35"/>
+                      <circle cx="79" cy="42" r="10" fill="#6b4a35"/>
+                      <circle cx="121" cy="42" r="10" fill="#6b4a35"/>
+                      <circle cx="92" cy="55" r="2" fill="#33322f"/>
+                      <circle cx="108" cy="55" r="2" fill="#33322f"/>
+                      <circle cx="86" cy="60" r="3" fill="#f5a3a3" opacity="0.6"/>
+                      <circle cx="114" cy="60" r="3" fill="#f5a3a3" opacity="0.6"/>
+                      <path d="M92,63 Q100,69 108,63" stroke="#33322f" stroke-width="2" fill="none" stroke-linecap="round"/>
+                    </svg>
+                  </div>
+                  <div class="field-label">Breed / Age / Attributes</div>
+                  <div class="select-grid">
+                    <select class="attr-select">
+                      <option>Species: Cat</option>
+                      <option>Species: Dog</option>
+                      <option>Species: Rabbit</option>
+                      <option>Species: Any</option>
+                    </select>
+                    <select class="attr-select">
+                      <option>Age: Baby</option>
+                      <option>Age: Young</option>
+                      <option>Age: Adult</option>
+                      <option selected>Age: Senior</option>
+                    </select>
+                    <select class="attr-select">
+                      <option selected>Breed: Any breed</option>
+                      <option>Breed: Domestic Shorthair</option>
+                      <option>Breed: Tabby</option>
+                    </select>
+                    <select class="attr-select">
+                      <option selected>Energy: Calm</option>
+                      <option>Energy: Medium</option>
+                      <option>Energy: Playful</option>
+                    </select>
+                    <select class="attr-select">
+                      <option selected>Good with kids: Any</option>
+                      <option>Good with kids: Yes</option>
+                      <option>Good with kids: No</option>
+                    </select>
+                    <select class="attr-select">
+                      <option selected>Location: Within 5 mi</option>
+                      <option>Location: Within 10 mi</option>
+                      <option>Location: Within 25 mi</option>
+                      <option>Location: Any distance</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="wish-section">
+                  <div class="field-label">Describe your ideal pet</div>
+                  <textarea class="req-box" readonly>Calm older cat that's okay being alone during workdays.</textarea>
+                </div>
+              </div>
+            </div>
+
+            <div class="tab-content" data-tab="1">
+              <div class="tab-title">AI Search &amp; Matches</div>
+              <div class="ai-box">
+                <div class="src-label">Your wish</div>
+                <div class="typewriter" id="adopterWishText"></div>
+                <div class="ai-arrow" id="adopterArrow">↓ parsing into filters ↓</div>
+                <div class="rule-pills" id="adopterFilterPills">
+                  <span class="pill">species: cat</span>
+                  <span class="pill">age: senior</span>
+                  <span class="pill">energy_level: low</span>
+                  <span class="pill">alone_tolerance: high</span>
+                </div>
+              </div>
+              <div class="match-stack-wrap" id="matchStackWrap">
+                <div class="field-label" style="margin-top:10px;">Matched Pets — swipe to decide</div>
+                <div class="match-stack" id="matchStack">
+                  <div class="match-toast" id="matchToast">💚 It's a match!</div>
+                </div>
+                <div class="swipe-controls">
+                  <button class="swipe-btn pass" id="passBtn">✕</button>
+                  <button class="swipe-btn like" id="likeBtn">♥</button>
+                </div>
+                <div class="swipe-hint-text" id="swipeHintText">👉 Swipe right = interested &middot; 👈 Swipe left = pass</div>
+              </div>
+            </div>
+
+            <div class="tab-content" data-tab="2">
+              <div class="tab-title">Your Matches</div>
+              <div class="matched-row" id="matchedRow"></div>
+
+              <div class="section-title" style="margin-top:6px;">Schedule</div>
+              <div class="booking-pet" id="bookingPetCard">
+                <div class="pet-photo-sm">🐱</div>
+                <div><div class="pet-name">Milo</div><div class="pet-sub">Domestic Shorthair · 4 yrs</div></div>
+              </div>
+
+              <div class="booking-step" id="chatStep">
+                <div class="section-title">Pick a video chat time</div>
+                <div class="slot-list" id="chatSlots">
+                  <button class="slot-btn">Tue · 2:00 PM</button>
+                  <button class="slot-btn">Wed · 4:00 PM</button>
+                  <button class="slot-btn">Thu · 9:00 AM</button>
+                </div>
+                <button class="primary-btn" id="bookChatBtn">Book Video Chat</button>
+              </div>
+
+              <div class="booking-step hidden" id="chatBookedStep">
+                <div class="confirm-box">✓ Video chat booked — <span id="bookedTimeLabel"></span></div>
+                <div class="section-title">How did the chat go?</div>
+                <button class="secondary-btn" id="chatWellBtn">It went well 👍 — request in-person visit</button>
+              </div>
+
+              <div class="booking-step hidden" id="visitStep">
+                <div class="section-title">Pick an in-person visit time</div>
+                <div class="slot-list" id="visitSlots">
+                  <button class="slot-btn">Sat · 11:00 AM</button>
+                  <button class="slot-btn">Sun · 1:00 PM</button>
+                </div>
+                <button class="primary-btn" id="bookVisitBtn">Book In-Person Visit</button>
+              </div>
+
+              <div class="booking-step hidden" id="visitBookedStep">
+                <div class="confirm-box">✓ In-person visit booked — <span id="bookedVisitLabel"></span></div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+        <button class="nav-arrow next" data-panel="right">&#8250;</button>
+      </div>
+      <div class="dots" id="rightDots">
+        <span class="dot active" data-panel="right" data-idx="0"></span>
+        <span class="dot" data-panel="right" data-idx="1"></span>
+        <span class="dot" data-panel="right" data-idx="2"></span>
+      </div>
+    </div>
+  </div>
+
+  </div>
+  </section>
+
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ---------------- Hero: scroll-cue smooth-scrolls to the panels ---------------- */
+  var scrollCue = document.getElementById('scrollCue');
+  var stageSection = document.getElementById('stageSection');
+  if (scrollCue && stageSection) {
+    scrollCue.addEventListener('click', function(){
+      stageSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  }
+
+  /* ---------------- Hover-to-focus split panels ---------------- */
+  var stage = document.getElementById('stage');
+  var leftPanel = document.getElementById('leftPanel');
+  var rightPanel = document.getElementById('rightPanel');
+
+  leftPanel.addEventListener('mouseenter', function(){
+    stage.classList.add('left-hover'); stage.classList.remove('right-hover');
+    rightPanel.classList.add('collapsed');
+  });
+  leftPanel.addEventListener('mouseleave', function(){
+    stage.classList.remove('left-hover');
+    rightPanel.classList.remove('collapsed');
+  });
+  rightPanel.addEventListener('mouseenter', function(){
+    stage.classList.add('right-hover'); stage.classList.remove('left-hover');
+    leftPanel.classList.add('collapsed');
+  });
+  rightPanel.addEventListener('mouseleave', function(){
+    stage.classList.remove('right-hover');
+    leftPanel.classList.remove('collapsed');
+  });
+
+  /* ---------------- Responsive phone sizing (generic phone shape, fills the panel) ---------------- */
+  var GENERIC_RATIO = 9 / 19.5; // generic modern phone screen proportions, not tied to any brand
+  var phoneConfigs = [
+    { phone: document.getElementById('leftPhone'), panel: leftPanel, watermark: document.getElementById('leftWatermarkText'), rotate: -90 },
+    { phone: document.getElementById('rightPhone'), panel: rightPanel, watermark: document.getElementById('rightWatermarkText'), rotate: 90 }
+  ];
+
+  function layoutPhones(){
+    phoneConfigs.forEach(function(cfg){
+      var phone = cfg.phone, panel = cfg.panel;
+      if (!phone || !panel) return;
+      var reservedH = 56;  // room for the dots row + breathing space
+      var reservedW = 116; // room for the two nav arrows + gaps
+      var boxH = Math.max(280, panel.clientHeight - reservedH);
+      var boxW = Math.max(180, panel.clientWidth - reservedW);
+      var h = boxH;
+      var w = h * GENERIC_RATIO;
+      if (w > boxW) { w = boxW; h = w / GENERIC_RATIO; }
+      phone.style.height = h + 'px';
+      phone.style.width = w + 'px';
+
+      var wm = cfg.watermark;
+      if (wm) {
+        wm.style.transform = 'scaleX(1)';
+        wm.style.fontSize = Math.max(26, h * 0.42) + 'px';
+        var naturalWidth = wm.offsetWidth || 1;
+        var targetWidth = w * 2; // watermark should be double the phone screen's width
+        var scaleX = targetWidth / naturalWidth;
+        wm.style.transform = 'rotate(' + cfg.rotate + 'deg) scaleX(' + scaleX + ')';
+      }
+    });
+  }
+  window.addEventListener('resize', layoutPhones);
+  layoutPhones();
+
+  /* ---------------- Generic tab / dot / arrow controller ---------------- */
+  function wait(ms){ return new Promise(function(r){ setTimeout(r, ms); }); }
+
+  function initTabs(panelEl, onShow){
+    var tabs = Array.prototype.slice.call(panelEl.querySelectorAll('.tab-content'));
+    var dots = Array.prototype.slice.call(panelEl.querySelectorAll('.dot'));
+    var prevBtn = panelEl.querySelector('.nav-arrow.prev');
+    var nextBtn = panelEl.querySelector('.nav-arrow.next');
+    var current = 0;
+
+    function show(idx){
+      idx = (idx + tabs.length) % tabs.length;
+      tabs[current].classList.remove('active');
+      dots[current].classList.remove('active');
+      current = idx;
+      tabs[current].classList.add('active');
+      dots[current].classList.add('active');
+      if (onShow) onShow(current);
+    }
+    prevBtn.addEventListener('click', function(){ show(current - 1); });
+    nextBtn.addEventListener('click', function(){ show(current + 1); });
+    dots.forEach(function(d, i){ d.addEventListener('click', function(){ show(i); }); });
+
+    if (onShow) onShow(current);
+    return { show: show };
+  }
+
+  /* ---------------- Cancelable typewriter ---------------- */
+  function typeWriter(el, text, isValid, speed){
+    speed = speed || 32;
+    return new Promise(function(resolve){
+      el.textContent = '';
+      var i = 0;
+      function step(){
+        if (!isValid()) return resolve(false);
+        if (i > text.length) return resolve(true);
+        el.textContent = text.slice(0, i);
+        i++;
+        setTimeout(step, speed);
+      }
+      step();
+    });
+  }
+
+  function popPills(container, isValid){
+    var pills = Array.prototype.slice.call(container.children);
+    container.classList.add('show');
+    pills.forEach(function(p, i){
+      setTimeout(function(){ if (isValid()) p.classList.add('pop'); }, i * 200);
+    });
+  }
+  function resetPills(container){
+    container.classList.remove('show');
+    Array.prototype.slice.call(container.children).forEach(function(p){ p.classList.remove('pop'); });
+  }
+
+  /* ---------------- Shelter: tab 1 photo-upload animation (plays once) ---------------- */
+  var uploadToken = 0;
+  var uploadPlayed = false;
+  function runUploadLoop(){
+    if (uploadPlayed) return;
+    uploadPlayed = true;
+    var myToken = ++uploadToken;
+    var isValid = function(){ return uploadToken === myToken; };
+    var stage = document.getElementById('uploadStage');
+    var fill = document.getElementById('uploadFill');
+    var thumbs = document.getElementById('uploadThumbs');
+
+    stage.className = 'upload-stage';
+    fill.style.width = '0%';
+    setTimeout(function(){
+      if (!isValid()) return;
+      stage.classList.add('uploading');
+      setTimeout(function(){
+        if (!isValid()) return;
+        stage.classList.remove('uploading');
+        stage.classList.add('success');
+        var t = document.createElement('div');
+        t.className = 'thumb';
+        t.textContent = '🐱';
+        thumbs.appendChild(t);
+        setTimeout(function(){
+          if (!isValid()) return;
+          stage.classList.remove('success');
+        }, 1700);
+      }, 1300);
+    }, 500);
+  }
+  function stopUploadLoop(){ uploadToken++; }
+
+  /* ---------------- Shelter: tab 2 rule-extraction animation ---------------- */
+  var shelterToken = 0;
+  function runShelterAI(){
+    var myToken = ++shelterToken;
+    var isValid = function(){ return shelterToken === myToken; };
+    var textEl = document.getElementById('shelterNoteText');
+    var pills = document.getElementById('shelterRulePills');
+    var arrowEl = document.getElementById('shelterArrow');
+    resetPills(pills);
+    arrowEl.classList.remove('active');
+
+    typeWriter(textEl, "She doesn't do well with young kids or other cats.", isValid, 32)
+      .then(function(ok){
+        if (!ok) return;
+        arrowEl.classList.add('active');
+        return wait(600);
+      })
+      .then(function(){
+        if (!isValid()) return;
+        popPills(pills, isValid);
+      });
+  }
+
+  /* ---------------- Adopter: tab 2 NL-search animation + matches ---------------- */
+  var adopterToken = 0;
+  function runAdopterAI(){
+    var myToken = ++adopterToken;
+    var isValid = function(){ return adopterToken === myToken; };
+    var textEl = document.getElementById('adopterWishText');
+    var pills = document.getElementById('adopterFilterPills');
+    var arrowEl = document.getElementById('adopterArrow');
+    var stackWrap = document.getElementById('matchStackWrap');
+    resetPills(pills);
+    arrowEl.classList.remove('active');
+    stackWrap.classList.remove('show');
+
+    typeWriter(textEl, "Calm older cat that's okay being alone during workdays.", isValid, 30)
+      .then(function(ok){
+        if (!ok) return;
+        arrowEl.classList.add('active');
+        return wait(600);
+      })
+      .then(function(){
+        if (!isValid()) return;
+        popPills(pills, isValid);
+        return wait(pills.children.length * 200 + 300);
+      })
+      .then(function(){
+        if (!isValid()) return;
+        stackWrap.classList.add('show');
+        renderStack();
+        setTimeout(function(){ if (isValid()) playSwipeHint(); }, 500);
+      });
+  }
+
+  /* ---------------- Tutorial hint: auto-demo the swipe gesture once ---------------- */
+  function playSwipeHint(){
+    var card = topCard();
+    var hintText = document.getElementById('swipeHintText');
+    if (!card || !hintText) return;
+    var hand = document.createElement('div');
+    hand.className = 'hint-hand';
+    hand.textContent = '🤚';
+    card.appendChild(hand);
+    card.classList.add('hinting');
+    hintText.classList.add('show');
+    setTimeout(function(){
+      card.classList.remove('hinting');
+      if (hand.parentNode) hand.parentNode.removeChild(hand);
+      hintText.classList.remove('show');
+    }, 3300);
+  }
+
+  /* ---------------- Swipeable match stack ---------------- */
+  var pets = [
+    { emoji: '🐈', name: 'Milo',   sub: 'Domestic Shorthair · 4 yrs', blurb: "Independent and low-energy — loves a sunny windowsill all to himself." },
+    { emoji: '🐈‍⬛', name: 'Nutmeg', sub: 'Tabby · 7 yrs',            blurb: "A calm senior girl who thrives in quiet, grown-up households." },
+    { emoji: '🐱', name: 'Shadow', sub: 'Domestic Longhair · 5 yrs',  blurb: "Content to nap solo all day. Gentle, easygoing, low-maintenance." }
+  ];
+  var petIndex = 0;
+
+  function renderStack(){
+    var stack = document.getElementById('matchStack');
+    stack.innerHTML = '<div class="match-toast" id="matchToast">💚 It\'s a match!</div>';
+    var order = [0, 1, 2];
+    order.slice().reverse().forEach(function(depth){
+      var pet = pets[(petIndex + depth) % pets.length];
+      var card = document.createElement('div');
+      card.className = 'pet-card';
+      card.style.zIndex = String(10 - depth);
+      card.style.transform = 'translateY(' + (depth * 8) + 'px) scale(' + (1 - depth * 0.045) + ')';
+      card.style.opacity = depth > 1 ? '0.55' : '1';
+      card.innerHTML =
+        '<div class="pet-photo">' + pet.emoji + '</div>' +
+        '<div class="pet-info">' +
+          '<div class="pet-name">' + pet.name + '</div>' +
+          '<div class="pet-sub">' + pet.sub + '</div>' +
+          '<div class="pet-blurb">' + pet.blurb + '</div>' +
+        '</div>' +
+        '<div class="swipe-badge like">INTERESTED</div>' +
+        '<div class="swipe-badge nope">PASS</div>';
+      stack.appendChild(card);
+      if (depth === 0) makeDraggable(card);
+    });
+  }
+
+  function topCard(){
+    var stack = document.getElementById('matchStack');
+    var cards = stack.querySelectorAll('.pet-card');
+    return cards.length ? cards[cards.length - 1] : null;
+  }
+
+  function showMatchToast(){
+    var toast = document.getElementById('matchToast');
+    if (!toast) return;
+    toast.classList.add('show');
+    setTimeout(function(){ toast.classList.remove('show'); }, 900);
+  }
+
+  function swipeCard(dir){
+    var card = topCard();
+    if (!card) return;
+    card.style.transition = 'transform .4s cubic-bezier(.34,.8,.4,1), opacity .4s ease';
+    card.style.transform = 'translate(' + (dir * 420) + 'px, -30px) rotate(' + (dir * 26) + 'deg)';
+    card.style.opacity = '0';
+    if (dir > 0) showMatchToast();
+    setTimeout(function(){
+      petIndex = (petIndex + 1) % pets.length;
+      renderStack();
+    }, 380);
+  }
+
+  function makeDraggable(card){
+    var dragging = false, startX = 0, startY = 0, dx = 0;
+    var likeBadge = card.querySelector('.swipe-badge.like');
+    var nopeBadge = card.querySelector('.swipe-badge.nope');
+
+    function onDown(e){
+      dragging = true;
+      card.style.transition = 'none';
+      var p = e.touches ? e.touches[0] : e;
+      startX = p.clientX; startY = p.clientY;
+      window.addEventListener('mousemove', onMove);
+      window.addEventListener('mouseup', onUp);
+      window.addEventListener('touchmove', onMove, { passive: false });
+      window.addEventListener('touchend', onUp);
+    }
+    function onMove(e){
+      if (!dragging) return;
+      if (e.cancelable) e.preventDefault();
+      var p = e.touches ? e.touches[0] : e;
+      dx = p.clientX - startX;
+      var dy = p.clientY - startY;
+      var rot = dx / 14;
+      card.style.transform = 'translate(' + dx + 'px,' + (dy * 0.15) + 'px) rotate(' + rot + 'deg)';
+      var strength = Math.min(Math.abs(dx) / 80, 1);
+      if (dx > 0) { likeBadge.style.opacity = strength; nopeBadge.style.opacity = 0; }
+      else { nopeBadge.style.opacity = strength; likeBadge.style.opacity = 0; }
+    }
+    function onUp(){
+      if (!dragging) return;
+      dragging = false;
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('mouseup', onUp);
+      window.removeEventListener('touchmove', onMove);
+      window.removeEventListener('touchend', onUp);
+      card.style.transition = 'transform .3s ease';
+      if (Math.abs(dx) > 80) {
+        swipeCard(dx > 0 ? 1 : -1);
+      } else {
+        card.style.transform = 'translateY(0px) scale(1)';
+        likeBadge.style.opacity = 0; nopeBadge.style.opacity = 0;
+      }
+      dx = 0;
+    }
+    card.addEventListener('mousedown', onDown);
+    card.addEventListener('touchstart', onDown, { passive: true });
+  }
+
+  document.getElementById('likeBtn').addEventListener('click', function(){ swipeCard(1); });
+  document.getElementById('passBtn').addEventListener('click', function(){ swipeCard(-1); });
+
+  /* ---------------- Shelter availability grid ---------------- */
+  (function(){
+    var days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
+    var times = ['9:00', '11:00', '2:00', '4:00'];
+    var published = { video: {'Mon-9:00':1,'Wed-2:00':1,'Thu-4:00':1,'Fri-11:00':1}, visit: {'Sat-11:00':1} };
+    var currentType = 'video';
+    var grid = document.getElementById('shelterAvailGrid');
+
+    function render(){
+      grid.innerHTML = '';
+      days.forEach(function(day){
+        var col = document.createElement('div');
+        col.className = 'avail-day-col';
+        var label = document.createElement('div');
+        label.className = 'avail-day-label';
+        label.textContent = day;
+        col.appendChild(label);
+        times.forEach(function(t){
+          var key = day + '-' + t;
+          var cell = document.createElement('div');
+          cell.className = 'slot-cell' + (published[currentType][key] ? ' published' : '');
+          cell.textContent = t;
+          cell.addEventListener('click', function(){
+            if (published[currentType][key]) delete published[currentType][key];
+            else published[currentType][key] = 1;
+            render();
+          });
+          col.appendChild(cell);
+        });
+        grid.appendChild(col);
+      });
+    }
+    render();
+
+    Array.prototype.slice.call(document.querySelectorAll('[data-avail]')).forEach(function(btn){
+      btn.addEventListener('click', function(){
+        document.querySelectorAll('[data-avail]').forEach(function(b){ b.classList.remove('active'); });
+        btn.classList.add('active');
+        currentType = btn.getAttribute('data-avail');
+        render();
+      });
+    });
+  })();
+
+  /* ---------------- Adopter booking flow ---------------- */
+  (function(){
+    function wireSlotList(listId, primaryBtnId, onBook){
+      var list = document.getElementById(listId);
+      var btn = document.getElementById(primaryBtnId);
+      list.querySelectorAll('.slot-btn').forEach(function(s){
+        s.addEventListener('click', function(){
+          list.querySelectorAll('.slot-btn').forEach(function(x){ x.classList.remove('selected'); });
+          s.classList.add('selected');
+          btn.classList.add('ready');
+        });
+      });
+      btn.addEventListener('click', function(){
+        var sel = list.querySelector('.slot-btn.selected');
+        if (!sel) return;
+        onBook(sel.textContent);
+      });
+    }
+
+    wireSlotList('chatSlots', 'bookChatBtn', function(time){
+      document.getElementById('bookedTimeLabel').textContent = time;
+      document.getElementById('chatStep').classList.add('hidden');
+      document.getElementById('chatBookedStep').classList.remove('hidden');
+    });
+
+    document.getElementById('chatWellBtn').addEventListener('click', function(){
+      document.getElementById('chatBookedStep').classList.add('hidden');
+      document.getElementById('visitStep').classList.remove('hidden');
+    });
+
+    wireSlotList('visitSlots', 'bookVisitBtn', function(time){
+      document.getElementById('bookedVisitLabel').textContent = time;
+      document.getElementById('visitStep').classList.add('hidden');
+      document.getElementById('visitBookedStep').classList.remove('hidden');
+    });
+  })();
+
+  /* ---------------- Adopter: matched pets row (tab 3) ---------------- */
+  function selectBookingPet(pet){
+    var card = document.getElementById('bookingPetCard');
+    card.querySelector('.pet-photo-sm').textContent = pet.emoji;
+    card.querySelector('.pet-name').textContent = pet.name;
+    card.querySelector('.pet-sub').textContent = pet.sub;
+    document.getElementById('chatStep').classList.remove('hidden');
+    document.getElementById('chatBookedStep').classList.add('hidden');
+    document.getElementById('visitStep').classList.add('hidden');
+    document.getElementById('visitBookedStep').classList.add('hidden');
+    document.querySelectorAll('#chatSlots .slot-btn, #visitSlots .slot-btn').forEach(function(b){ b.classList.remove('selected'); });
+    document.getElementById('bookChatBtn').classList.remove('ready');
+    document.getElementById('bookVisitBtn').classList.remove('ready');
+  }
+
+  function renderMatchedRow(){
+    var row = document.getElementById('matchedRow');
+    row.innerHTML = '';
+    pets.forEach(function(pet, i){
+      var chip = document.createElement('div');
+      chip.className = 'matched-chip' + (i === 0 ? ' active' : '');
+      chip.innerHTML = '<div class="avatar">' + pet.emoji + '</div><div class="name">' + pet.name + '</div>';
+      chip.addEventListener('click', function(){
+        row.querySelectorAll('.matched-chip').forEach(function(c){ c.classList.remove('active'); });
+        chip.classList.add('active');
+        selectBookingPet(pet);
+      });
+      row.appendChild(chip);
+    });
+  }
+  renderMatchedRow();
+
+  /* ---------------- Wire up both phones' tab navigation ---------------- */
+  initTabs(leftPanel, function(idx){
+    if (idx === 0) { runUploadLoop(); } else { stopUploadLoop(); }
+    if (idx === 1) runShelterAI();
+  });
+  initTabs(rightPanel, function(idx){
+    if (idx === 1) runAdopterAI();
+  });
+
+})();
+</script>
+</body>
+</html>
