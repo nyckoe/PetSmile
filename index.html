@@ -451,7 +451,48 @@
   .booking-step{ transition: opacity .3s ease; }
   .booking-step.hidden{ display:none; }
 
+  /* ==================================================================
+     Responsive: phones / narrow screens
+     - topbar reflows to two rows
+     - shelter/adopter panels stack vertically instead of side-by-side
+     - hover-to-focus is replaced by simple full-screen stacked panels
+       (each panel becomes its own scroll-snap "page")
+     ================================================================== */
   @media (max-width: 900px){
+    :root{ --header-h: 100px; }
+
+    .topbar{
+      grid-template-columns: 1fr; grid-template-rows: auto auto;
+      row-gap:6px; padding:12px 16px;
+    }
+    .topbar .spacer{ display:none; }
+    .topbar .logo{ grid-column:1; grid-row:1; justify-self:center; font-size:17px; }
+    .topnav{
+      grid-column:1; grid-row:2; justify-self:center;
+      flex-wrap:wrap; justify-content:center; gap:10px 16px;
+    }
+    .topnav a{ font-size:11.5px; }
+    .topnav a.cta{ padding:6px 12px; }
+
+    .hero-section{ padding:28px 18px; }
+    .hero-content{ max-width:100%; gap:12px; }
+    .hero-eyebrow{ font-size:11px; }
+    .hero-line{ font-size:14.5px; }
+    .hero-line.headline{ font-size:19px; }
+    .hero-paws{ font-size:20px; letter-spacing:10px; }
+
+    .stage-section{ display:block; height:auto; scroll-snap-align:none; }
+    .stage{ flex-direction:column; height:auto; }
+    .divider{ width:100%; height:2px; }
+    .panel{
+      flex:none; width:100%;
+      height: calc(100vh - var(--header-h));
+      scroll-snap-align:start; scroll-snap-stop:always;
+    }
+    /* Hover-expand doesn't apply on touch — panels are always shown at full size */
+    .panel.collapsed .panel-inner{ transform:none; opacity:1; pointer-events:auto; }
+    .panel.collapsed::after{ content:none; }
+
     .panel-label{ top:16px; font-size:11px; }
   }
 </style>
@@ -459,7 +500,7 @@
 <body>
 
 <header class="topbar">
-  <div></div>
+  <div class="spacer"></div>
   <div class="logo"><span class="paw">🐾</span>PetSmile</div>
   <nav class="topnav">
     <a href="#">Login</a>
@@ -774,12 +815,14 @@
     });
   }
 
-  /* ---------------- Hover-to-focus split panels ---------------- */
+  /* ---------------- Hover-to-focus split panels (desktop only — panels stack on mobile) ---------------- */
   var stage = document.getElementById('stage');
   var leftPanel = document.getElementById('leftPanel');
   var rightPanel = document.getElementById('rightPanel');
+  var desktopMQ = window.matchMedia('(min-width: 901px)');
 
   leftPanel.addEventListener('mouseenter', function(){
+    if (!desktopMQ.matches) return;
     stage.classList.add('left-hover'); stage.classList.remove('right-hover');
     rightPanel.classList.add('collapsed');
   });
@@ -788,6 +831,7 @@
     rightPanel.classList.remove('collapsed');
   });
   rightPanel.addEventListener('mouseenter', function(){
+    if (!desktopMQ.matches) return;
     stage.classList.add('right-hover'); stage.classList.remove('left-hover');
     leftPanel.classList.add('collapsed');
   });
@@ -829,6 +873,7 @@
     });
   }
   window.addEventListener('resize', layoutPhones);
+  window.addEventListener('orientationchange', function(){ setTimeout(layoutPhones, 150); });
   layoutPhones();
 
   /* ---------------- Generic tab / dot / arrow controller ---------------- */
